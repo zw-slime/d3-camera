@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<style type="text/css">
+body,
+html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+.container {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #232834;
+}
+.key--circle {
+    fill: transparent;
+    stroke: #B9BBBF;
+    stroke-dasharray: 3 3;
+    stroke-width: 1.5;
+}
+
+.key--circle0 {
+    fill: #A7A9AE;
+    stroke: transparent;
+}
+
+.key--circle1 {
+    fill: transparent;
+    stroke: #8C715F;
+    stroke-dasharray: 5 5;
+    stroke-width: 1.5;
+}
+
+.key--circle2 {
+    fill: #CFD0D3;
+    stroke: transparent;
+}
+
+.key--circle3--label {
+    fill: #fff;
+    stroke: transparent;
+    font-size: 24px;
+}
+
+.key--circle3--label1 {
+    fill: #fff;
+    stroke: transparent;
+    font-size: 16px;
+}
+
+.key--circle4 {
+    fill: #8C715E;
+    stroke: transparent;
+}
+
+.key--circle5 {
+    fill: transparent;
+    stroke: #8C715E;
+    stroke-width: 2.5;
+}
+
+.key--circle6 {
+    fill: transparent;
+    stroke: #8C715E;
+    stroke-width: 1.5;
+}
+
+.key--circle7 {
+    fill: rgba(166, 131, 105, 0.2);
+    stroke: transparent;
+}
+
+.key--circle8 {
+    fill: #73615A;
+    stroke: transparent;
+}
+
+.key--circle9 {
+    fill: #423E42;
+    stroke: transparent;
+}
+
+.key--circle10 {
+    fill: #615451;
+    stroke: transparent;
+}
+</style>
+<body>
+	<div class="container" id="chart"></div>
+	<script src="https://d3js.org/d3.v4.min.js"></script>
+	<script>
+	let chart,width,height,arc;
+	creatChart();
+	function creatChart() {
+    let element = document.getElementById("chart");
+    width = element.offsetWidth;
+    height = element.offsetHeight;
+    let svg = d3.select(element).append('svg')
+      .attr('width',element.offsetWidth)
+      .attr('height',element.offsetHeight),
+    g = svg.append("g").attr("transform","translate("+width/2+","+height/2+")"),
+    outerR = height/2-96,
+    innerR = outerR - 24,
+    over = "ontouchstart" in window ? "touchstart" : "mouseover",
+    out = "ontouchstart" in window ? "touchend" : "mouseout",
+
+    
+
+    arc = d3.arc()
+      .padRadius(outerR)
+      .innerRadius( (d) => {return d.innerRadius})
+      .outerRadius( (d) => {return d.outerRadius})
+     
+     //刻度 
+     let i =0 , time = null;
+     time = setInterval(function() {
+       if(i<=sharpen().length){
+        let key = g.selectAll("path")
+          .data(sharpen().slice(0,i))
+          .enter().append("path")
+          .each((d, i) => { 
+            i%30==0?(d.innerRadius = innerR - 10):(d.innerRadius = innerR - 2); 
+            d.outerRadius = outerR - 10 ;
+          })
+          .attr("class", function(d) { return "key key--circle0"; })
+          .attr("d",  arc);
+          i++;
+       }else {
+         clearInterval(time);
+       }
+
+     });
+    
+
+     //刻度外一层虚线圆环
+     
+     setTimeout(function() {
+        clearInterval(time);
+        svg.append("circle")
+        .attr("r", outerR - 5)
+        .attr("cx",  width/2)
+        .attr("cy",  height/2)
+        .attr("class", "key key--circle1");
+     }, 362*4+120);
+    
+    
+    //月份刻度分割线
+    setTimeout(function() {
+      clearInterval(time);
+      let g1 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+      let key1 = g1.selectAll("path")
+        .data(sharpen1())
+        .enter().append("path")
+        .each(function(d, i) { d.outerRadius = outerR + 22 ; d.innerRadius = innerR + 24})
+        .attr("class", "key key--circle2")
+        .attr("d",  arc);
+    }, 362*4+120*2);
+    
+
+    //月份文字
+    setTimeout(function() {
+      clearInterval(time);
+      let g2 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+      
+      let months = g2.selectAll("text")
+        .data(sharpen2())
+        .enter()
+        .append("text")
+        .each(function(d, i) { d.outerRadius = outerR + 10 + 10 ; d.innerRadius = innerR + 10; d.angle = (d.startAngle + d.endAngle) / 2;})
+        .attr("transform",function(d){ 
+            return "translate("+arc.centroid(d)+")rotate("+( d.angle * 180 / Math.PI )+")";//计算每个弧形的中心点（几何中心）
+        })
+        .each(function(d,i){
+          d3.select(this).append("tspan").attr("class","key--circle3--label").attr("text-anchor","middle").text(d.data);
+          d3.select(this).append("tspan").attr("class","key--circle3--label1").attr("text-anchor","middle").text('月')
+        });
+    }, 362*4+120*2);
+    
+
+      //外环刻度
+      setTimeout(function() {
+        clearInterval(time);
+        let g3 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+        
+        let key3 = g3.selectAll("path")
+          .data(sharpen())
+          .enter().append("path")
+          .each(function(d, i) { d.outerRadius = innerR + 60 + 8 ; d.innerRadius = innerR + 60;})
+          .attr("class", "key key--circle4")
+          .attr("d",  arc);
+      }, 362*4+120*3);
+      
+
+    //刻度外一层圆线
+    setTimeout(function() {
+      clearInterval(time);
+      svg.append("circle")
+      .attr("r", innerR + 75)
+      .attr("cx",  width/2)
+      .attr("cy",  height/2)
+      .attr("class", "key key--circle5");
+    }, 362*4+120*4);
+
+    setTimeout(function() {
+      clearInterval(time);
+      svg.append("circle")
+      .attr("r", innerR + 83)
+      .attr("cx",  width/2)
+      .attr("cy",  height/2)
+      .attr("class", "key key--circle6");
+    }, 362*4+120*5);
+    
+    setTimeout(function() {
+      clearInterval(time);
+      svg.append("circle")
+        .attr("r", innerR + 90)
+        .attr("cx",  width/2)
+        .attr("cy",  height/2)
+        .attr("class", "key key--circle6");
+    }, 362*4+120*6);
+
+    setTimeout(function() {
+      clearInterval(time);
+      let g4 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+      
+      let key4 = g4.selectAll("path")
+        .data(sharpen3())
+        .enter().append("path")
+        .each(function(d, i) { d.outerRadius = innerR + 77 + 43 ; d.innerRadius = innerR + 77;})
+        .attr("class", "key key--circle7")
+        .attr("d",  arc);
+
+        d3.interval(function() {
+          key4.transition()
+          .ease(d3.easeLinear)
+          .duration(2000)
+          .attrTween("transform", rotTween);
+        },2000);
+        
+  
+        
+    }, 362*4+120*7);
+
+    setTimeout(function() {
+      clearInterval(time);
+      let g5 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+      
+      let key5 = g5.selectAll("path")
+        .data([{ startAngle: (1/6)*Math.PI,endAngle: (1/3)*Math.PI}])
+        .enter().append("path")
+        .each(function(d, i) { d.outerRadius = innerR +91 + 2 ; d.innerRadius = innerR + 91;})
+        .attr("class", "key key--circle8")
+        .attr("d",  arc);
+
+        let g6 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+        let key6 = g6.selectAll("path")
+          .data([{ startAngle: (2/3)*Math.PI,endAngle: (9/8)*Math.PI}])
+          .enter().append("path")
+          .each(function(d, i) { d.outerRadius = innerR +91 + 5 ; d.innerRadius = innerR + 91;})
+          .attr("class", "key key--circle8")
+          .attr("d",  arc);
+
+          d3.interval(function() {
+            key5.transition()
+            .ease(d3.easeLinear)
+            .duration(2000*Math.random())
+            .attrTween("transform", rotTween);
+
+            key6.transition()
+            .ease(d3.easeLinear)
+            .duration(2000*Math.random())
+            .attrTween("transform", rotTween);
+          },2000);
+
+
+    }, 362*4+120*8);
+    
+
+    setTimeout(function() {
+      clearInterval(time);
+      let g7 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+      let key7 = g7.selectAll("path")
+        .data([{ startAngle: (2/3)*Math.PI,endAngle: (7/8)*Math.PI}])
+        .enter().append("path")
+        .each(function(d, i) { d.outerRadius = innerR +126 + 4 ; d.innerRadius = innerR + 126;})
+        .attr("class","key key--circle9")
+        .attr("d",  arc);
+  
+      let g8 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+      let key8 = g8.selectAll("path")
+        .data([{ startAngle: (2/3)*Math.PI,endAngle: (9/7)*Math.PI}])
+        .enter().append("path")
+        .each(function(d, i) { d.outerRadius = innerR +136 + 2 ; d.innerRadius = innerR + 136;})
+        .attr("class", "key key--circle9")
+        .attr("d",  arc);
+
+        d3.interval(function() {
+          key7.transition()
+          .ease(d3.easeLinear)
+          .duration(2000*Math.random())
+          .attrTween("transform", rotTween);
+
+          key8.transition()
+          .ease(d3.easeLinear)
+          .duration(2000*Math.random())
+          .attrTween("transform", rotTween);
+        },2000);
+
+    }, 362*4+120*9);
+      
+    
+    setTimeout(function() {
+      clearInterval(time);
+     let g9 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+    let key9 = g9.selectAll("path")
+      .data([{ startAngle: (4/9)*Math.PI,endAngle: (5/9)*Math.PI}])
+      .enter().append("path")
+      .each(function(d, i) { d.outerRadius = innerR +136 + 3 ; d.innerRadius = innerR + 136;})
+      .attr("class", function(d) { return "key key--circle10"; })
+      .attr("d",  arc);
+
+    let g10 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+    let key10 = g10.selectAll("path")
+      .data([{ startAngle: (1/9)*Math.PI,endAngle: (4/9)*Math.PI}])
+      .enter().append("path")
+      .each(function(d, i) { d.outerRadius = innerR +150 + 4 ; d.innerRadius = innerR + 150;})
+      .attr("class", function(d) { return "key key--circle9"; })
+      .attr("d",  arc);
+
+    let g11 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+    let key11 = g11.selectAll("path")
+      .data([{ startAngle: (4/9-0.01)*Math.PI,endAngle: (6/9)*Math.PI}])
+      .enter().append("path")
+      .each(function(d, i) { d.outerRadius = innerR +156 + 4 ; d.innerRadius = innerR + 156;})
+      .attr("class", function(d) { return "key key--circle9"; })
+      .attr("d",  arc);
+
+      d3.interval(function() {
+        key9.transition()
+        .ease(d3.easeLinear)
+        .duration(2000*Math.random())
+        .attrTween("transform", rotTween);
+
+        key10.transition()
+        .ease(d3.easeLinear)
+        .duration(2000*Math.random())
+        .attrTween("transform", rotTween);
+
+        key11.transition()
+        .ease(d3.easeLinear)
+        .duration(2000*Math.random())
+        .attrTween("transform", rotTween);
+      },2000);
+
+    }, 362*4+120*10);
+
+    setTimeout(function() {
+      clearInterval(time);
+      let g12 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+      let key12 = g12.selectAll("path")
+        .data([{ startAngle: (-1/9)*Math.PI,endAngle: (3/9)*Math.PI}])
+        .enter().append("path")
+        .each(function(d, i) { d.outerRadius = innerR +168 + 4 ; d.innerRadius = innerR + 168;})
+        .attr("class", function(d) { return "key key--circle9"; })
+        .attr("d",  arc);
+  
+      let g13 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+      let key13 = g13.selectAll("path")
+        .data([{ startAngle: (3/9+1/120)*Math.PI,endAngle: (5/9)*Math.PI}])
+        .enter().append("path")
+        .each(function(d, i) { d.outerRadius = innerR +168 + 4 ; d.innerRadius = innerR + 168;})
+        .attr("class", function(d) { return "key key--circle9"; })
+        .attr("d",  arc);
+  
+    let g14 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+    let key14 = g14.selectAll("path")
+      .data([{ startAngle: (9/7)*Math.PI,endAngle: (4/2)*Math.PI}])
+      .enter().append("path")
+      .each(function(d, i) { d.outerRadius = innerR +168 + 4 ; d.innerRadius = innerR + 168;})
+      .attr("class", function(d) { return "key key--circle9"; })
+      .attr("d",  arc);
+
+      d3.interval(function() {
+        key12.transition()
+        .ease(d3.easeLinear)
+        .duration(2000*Math.random())
+        .attrTween("transform", rotTween);
+
+        key13.transition()
+        .ease(d3.easeLinear)
+        .duration(2000*Math.random())
+        .attrTween("transform", rotTween);
+
+        key14.transition()
+        .ease(d3.easeLinear)
+        .duration(2000*Math.random())
+        .attrTween("transform", rotTween);
+      },2000);
+
+    }, 362*4+120*11);
+
+    setTimeout(function() {
+      clearInterval(time);
+      let g15 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+      let key15 = g15.selectAll("path")
+        .data([{ startAngle: (300/180)*Math.PI,endAngle: (340/180)*Math.PI}])
+        .enter().append("path")
+        .each(function(d, i) { d.outerRadius = innerR +140 + 4 ; d.innerRadius = innerR + 140;})
+        .attr("class", function(d) { return "key key--circle9"; })
+        .attr("d",  arc);
+      
+      let g16 = svg.append("g").attr("transform","translate("+width/2+","+height/2+")") ;
+      let key16 = g16.selectAll("path")
+        .data([{ startAngle: (220/180)*Math.PI,endAngle: (280/180)*Math.PI}])
+        .enter().append("path")
+        .each(function(d, i) { d.outerRadius = innerR +140 + 6 ; d.innerRadius = innerR + 140;})
+        .attr("class", function(d) { return "key key--circle10"; })
+        .attr("d",  arc);
+
+        d3.interval(function() {
+          key15.transition()
+          .ease(d3.easeLinear)
+          .duration(2000*Math.random())
+          .attrTween("transform", rotTween);
+  
+          key16.transition()
+          .ease(d3.easeLinear)
+          .duration(2000*Math.random())
+          .attrTween("transform", rotTween);
+  
+        },2000);
+  
+    }, 362*4+120*12);
+
+  
+    
+    //刻度内一层虚线圆环
+    setTimeout(function() {
+     svg.append("circle")
+        .attr("r", outerR - 50)
+        .attr("cx",  width/2)
+        .attr("cy",  height/2)
+        .attr("class", function(d) { return "key key--circle"; });
+    }, 362*4+120*13);
+
+  }
+
+  function rotTween() {
+     
+      var i = d3.interpolate(0, 360);
+        return function(t) {
+          return "rotate(" + i(t) + ")";
+        }
+  }
+  
+  function sharpen() {
+    let len = 360*2,arr=[],k;
+    let keyWidth = Math.PI * 2 / len;
+  
+    for (let i = 0, n = 360; i < n; ++i) {
+      if(i==0){
+        k = {
+          startAngle: -keyWidth*30,
+          endAngle: keyWidth - keyWidth*30,
+          data: 0
+        }
+        arr.push(k);
+      }else{
+        k = arr[i-1];
+        arr.push({
+          startAngle: k.startAngle + keyWidth*2,
+          endAngle: k.startAngle + keyWidth*3,
+          data: i
+        });
+      }
+       
+    }
+    return arr;
+  }
+
+  function sharpen1() {
+    let len = 360*2,arr=[],k;
+    let keyWidth = Math.PI * 2 / len;
+  
+    for (let i = 0, n = 12; i < n; ++i) {
+      if(i==0){
+        k = {
+          startAngle: -keyWidth*30,
+          endAngle: -keyWidth*30 + keyWidth/2,
+          data: 0
+        }
+        arr.push(k);
+      }else{
+        k = arr[i-1];
+        arr.push({
+          startAngle: k.startAngle + keyWidth*60,
+          endAngle: k.startAngle + keyWidth*60 + keyWidth/2,
+          data: i
+        })
+      }
+        
+    }
+    return arr;
+  }
+
+
+ function sharpen2() {
+    let len = 12,arr=[],k;
+    let keyWidth = Math.PI * 2 / len;
+    let month = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sap","Oct","Nov","Dec"];
+    for (let i = 0, n = 12; i < n; ++i) {
+      if(i==0){
+        k = {
+          startAngle: -keyWidth/2,
+          endAngle: -keyWidth/2 + keyWidth,
+          data: month[i]+"./"+(i+1)
+        }
+        arr.push(k);
+      }else{
+        k = arr[i-1];
+        arr.push({
+          startAngle: k.startAngle + keyWidth,
+          endAngle: k.startAngle + keyWidth*2,
+          data: month[i]+"./"+(i+1)
+        })
+      }
+        
+    }
+    return arr;
+  }
+
+  function sharpen3() {
+    let arr = [];
+    arr.push({
+      startAngle: -(1/3)*Math.PI,
+      endAngle: (1/3)*Math.PI
+    })
+
+    arr.push({
+      startAngle: (7/18)*Math.PI,
+      endAngle: (16/18)*Math.PI
+    })
+
+    arr.push({
+      startAngle: (19/18)*Math.PI,
+      endAngle: (28/18)*Math.PI
+    })
+    return arr;
+  }
+
+	</script>
+</body>
+</html>
